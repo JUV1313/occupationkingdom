@@ -1,0 +1,12 @@
+{
+  "name": "career-echo-openworld-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-only MVP: open world POV career exploration game with RIASEC + journal + local telemetry",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "^9.10.0"
+  }
+}
