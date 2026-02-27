@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>ממלכות הנטייה, MVP</title>
+    <link rel="stylesheet" href="styles/main.css" />
+  </head>
+
+  <body>
+    <noscript>
+      צריך JavaScript כדי להריץ את המשחק.
+    </noscript>
+
+    <div id="app">
+      <canvas id="game-canvas" tabindex="0" aria-label="משחק תלת מימד"></canvas>
+
+      <div id="overlay-loading" class="overlay" role="dialog" aria-modal="true" aria-live="polite">
+        <div class="panel">
+          <h1>טוען עולם...</h1>
+          <div class="progress" aria-label="התקדמות טעינה">
+            <div id="loading-bar" class="progress-bar"></div>
+          </div>
+          <p id="loading-text" class="muted">מכין את ממלכת היער.</p>
+        </div>
+      </div>
+
+      <div id="overlay-start" class="overlay hidden" role="dialog" aria-modal="true">
+        <div class="panel">
+          <h1>ממלכות הנטייה</h1>
+          <p>
+            MVP משחקי: גוף ראשון, עולם פתוח קטן, ממלכת היער, 3 סצנות אינטראקטיביות.
+            הבחירות שלך בונות פרופיל RIASEC, והעולם מגיב.
+          </p>
+
+          <div class="row">
+            <button id="btn-start" class="primary" type="button">התחל משחק</button>
+            <button id="btn-load" type="button">טען שמירה</button>
+          </div>
+
+          <details>
+            <summary>שליטה</summary>
+            <ul>
+              <li>WASD, תנועה</li>
+              <li>עכבר, מבט</li>
+              <li>קליק על הקנבס, ניסיון לנעילת עכבר (Pointer Lock, דסקטופ)</li>
+              <li>E, אינטראקציה</li>
+              <li>J, יומן ותיק</li>
+              <li>Esc, יציאה מתפריט או שחרור עכבר</li>
+            </ul>
+          </details>
+
+          <p class="fineprint">
+            שמירה וטלמטריה נשמרות מקומית בלבד בדפדפן. אין שרת.
+          </p>
+        </div>
+      </div>
+
+      <div id="hud" class="hud hidden" aria-live="polite">
+        <div class="hud-top">
+          <div id="hud-crosshair" class="crosshair" aria-hidden="true">+</div>
+          <div id="hud-prompt" class="prompt hidden">לחץ E כדי לתקשר</div>
+        </div>
+
+        <div class="hud-buttons">
+          <button id="btn-journal" class="hud-btn" type="button" aria-label="פתח יומן">יומן</button>
+          <button id="btn-save" class="hud-btn" type="button" aria-label="שמור">שמור</button>
+          <button id="btn-export" class="hud-btn" type="button" aria-label="ייצא נתונים">ייצא נתונים</button>
+          <button id="btn-settings" class="hud-btn" type="button" aria-label="הגדרות">הגדרות</button>
+        </div>
+
+        <div id="hud-riasec" class="riasec" aria-label="מדדי RIASEC">
+          <div class="bar">
+            <span class="label">R</span>
+            <div class="track"><div class="fill" data-k="R"></div></div>
+            <span class="value" data-v="R">0</span>
+          </div>
+          <div class="bar">
+            <span class="label">I</span>
+            <div class="track"><div class="fill" data-k="I"></div></div>
+            <span class="value" data-v="I">0</span>
+          </div>
+          <div class="bar">
+            <span class="label">A</span>
+            <div class="track"><div class="fill" data-k="A"></div></div>
+            <span class="value" data-v="A">0</span>
+          </div>
+          <div class="bar">
+            <span class="label">S</span>
+            <div class="track"><div class="fill" data-k="S"></div></div>
+            <span class="value" data-v="S">0</span>
+          </div>
+          <div class="bar">
+            <span class="label">E</span>
+            <div class="track"><div class="fill" data-k="E"></div></div>
+            <span class="value" data-v="E">0</span>
+          </div>
+          <div class="bar">
+            <span class="label">C</span>
+            <div class="track"><div class="fill" data-k="C"></div></div>
+            <span class="value" data-v="C">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="dialogue" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="dlg-speaker" aria-describedby="dlg-text">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <h2 id="dlg-speaker">דיאלוג</h2>
+            <button id="btn-dlg-close" class="icon" type="button" aria-label="סגור">✕</button>
+          </div>
+          <p id="dlg-text"></p>
+          <div id="dlg-options" class="dlg-options" role="list"></div>
+        </div>
+      </div>
+
+      <div id="panel-journal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="journal-title">
+        <div class="modal-inner wide">
+          <div class="modal-header">
+            <h2 id="journal-title">יומן ותיק</h2>
+            <button id="btn-journal-close" class="icon" type="button" aria-label="סגור">✕</button>
+          </div>
+
+          <div class="tabs">
+            <button id="tab-journal" class="tab active" type="button">יומן</button>
+            <button id="tab-inv" class="tab" type="button">תיק</button>
+          </div>
+
+          <div id="journal-view" class="tabview">
+            <div id="journal-list" class="list" aria-label="רשומות יומן"></div>
+
+            <div class="editor">
+              <div id="journal-prompt" class="muted">בחר סצנה או הוסף מחשבה כללית.</div>
+              <textarea
+                id="journal-text"
+                rows="6"
+                placeholder="כתוב כאן..."
+                aria-label="טקסט יומן"
+              ></textarea>
+              <div class="row">
+                <button id="btn-journal-save" class="primary" type="button">שמור רשומה</button>
+                <button id="btn-journal-clear" type="button">נקה</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="inv-view" class="tabview hidden">
+            <div id="inv-list" class="list" aria-label="פריטים"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-future" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="future-title">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <h2 id="future-title">חיזוי לעשר שנים, סטאב</h2>
+            <button id="btn-future-close" class="icon" type="button" aria-label="סגור">✕</button>
+          </div>
+          <div id="future-text" class="future-text"></div>
+          <p class="muted fineprint">
+            זה סטאב, מטרתו להדגים חיבור עתידי ל”סימולציית עשור”.
+          </p>
+        </div>
+      </div>
+
+      <div id="panel-settings" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="modal-inner">
+          <div class="modal-header">
+            <h2 id="settings-title">הגדרות</h2>
+            <button id="btn-settings-close" class="icon" type="button" aria-label="סגור">✕</button>
+          </div>
+
+          <label class="field">
+            <span>רגישות מבט</span>
+            <input id="opt-look" type="range" min="0.3" max="2.5" step="0.1" value="1.0" />
+          </label>
+
+          <label class="field">
+            <span>ניגודיות גבוהה</span>
+            <input id="opt-contrast" type="checkbox" />
+          </label>
+
+          <label class="field">
+            <span>טקסט גדול</span>
+            <input id="opt-bigtext" type="checkbox" />
+          </label>
+
+          <div class="row">
+            <button id="btn-clear-save" type="button">מחק שמירה</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="mobile-controls" class="mobile hidden">
+        <div id="joy-left" class="joystick" aria-hidden="true">
+          <div class="stick"></div>
+        </div>
+        <button id="btn-interact" class="mobile-btn" type="button" aria-label="אינטראקציה">E</button>
+      </div>
+
+      <div id="toast" class="toast hidden" aria-live="assertive"></div>
+    </div>
+
+    <!-- תלות יחידה, Babylon מוצמדת גרסה -->
+    <script src="https://cdn.jsdelivr.net/npm/babylonjs@8.3.0/babylon.js"></script>
+
+    <!-- Core -->
+    <script src="src/core/util.js"></script>
+    <script src="src/core/analytics.js"></script>
+    <script src="src/core/storage.js"></script>
+    <script src="src/core/riasec.js"></script>
+    <script src="src/core/input.js"></script>
+
+    <!-- Game -->
+    <script src="src/game/ui.js"></script>
+    <script src="src/game/npc.js"></script>
+    <script src="src/game/scenes.forest.js"></script>
+    <script src="src/game/world.js"></script>
+    <script src="src/game/future.js"></script>
+    <script src="src/game/game.js"></script>
+
+    <!-- Boot -->
+    <script src="src/boot.js"></script>
+  </body>
+</html>
